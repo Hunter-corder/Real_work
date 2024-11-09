@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vessel Data</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: white;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+        }
+        .rectangles {
+            display: flex;
+            /* gap: 20px; */
+            margin-top: 20px;
+            /* align-items: flex-end; */
+            /* justify-content: center; */
+            /* flex-wrap: nowrap;
+        }
+        .vessel-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            margin-bottom: 10px;
+            transform: translateX(-50px);  /* Shift all vessels 20px to the left */
+        }
+        .outer_rectangle {
+            height: 243px;
+            width: 31px;
+            border-radius: 5px;
+            border: 2px solid #ddd;
+            background: white;
+            position: absolute;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            bottom: 16rem;  /* Position the rectangle towards the bottom of the image */
+            transition: left 0.3s ease;
+            transform: translateX(8rem);
+        }
+        .rectangle {
+            width: 100%;
+            background-color: #4a90e2;
+            border-radius: 5px 5px 0 0;
+            position: absolute;
+            bottom: 0;
+            transition: height 0.3s ease;
+        }
+        .value {
+            text-align: center;
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+            position: relative;
+            bottom: 2rem;
+            left: -41%;
+            transform: translateX(45%);
+            transition: color 0.3s;
+        }
+        .value.no-data {
+            color: #888;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 40px;
+            font-weight: bold;
+        }
+        /* Responsive Design */
+        @media screen and (max-width: 600px) {
+            .rectangles {
+                flex-direction: column;
+                align-items: center;
+            }
+            .outer_rectangle {
+                margin-bottom: 10px;
+                width: 80px;
+            }
+        }
+    </style>
+    <!-- Include jQuery for AJAX requests -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Vessel Data Dashboard</h1>
+    <div class="rectangles" id="vessel-data-container">
+        <!-- Loop through each vessel and render its initial state -->
+        {% for vessel in vessel_positions %}
+            <div class="vessel-container" style="left: {{ vessel.left_position }}px;" id="vessel-{{ vessel.device_id }}">
+                <img src="{% static 'monitor/container.png' %}" alt="Vessel Image" class="vessel-image">
+                <div class="outer_rectangle">
+                    <div class="rectangle" style="height: {{ vessel.level|default:0 }}px;"></div>
+                </div>
+                <div class="value {% if vessel.level is none %}no-data{% endif %}" id="level-{{ vessel.device_id }}">
+                    {% if vessel.level %}
+                        {{ vessel.level }}
+                    {% else %}
+                        No data
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Error message (if any) -->
+    {% if error_message %}
+        <div class="error" id="error-message">{{ error_message }}</div>
+    {% endif %}
+
+    <script>
+        // Function to fetch the latest vessel data and update the dashboard
+        function fetchVesselData() {
+            $.ajax({
+                url: "{% url 'get_vessel_readings' %}",  // The URL to fetch vessel readings
+                method: "GET",
+                success: function(response) {
+                    // Check for the error message and update if needed
+                    if (response.error) {
+                        $('#error-message').text(response.error);
+                    }
+        
+                    // Update the vessel levels dynamically
+                    for (let vesselId in response.readings) {
+                        const level = response.readings[vesselId];
+                        const levelElement = $('#level-' + vesselId);
+                        const rectangle = $('#vessel-' + vesselId).find('.rectangle');
+        
+                        // Calculate percentage of 3500 (maximum value)
+                        let percentage = 0;
+                        if (level !== null) {
+                            // Calculate percentage of the maximum value (3500)
+                            percentage = Math.min((level / 3500) * 100, 100);  // Cap at 100%
+                            levelElement.text(level + " gallons");
+                            rectangle.css('height', percentage + '%');  // Set the height as percentage
+                            levelElement.removeClass('no-data');
+                        } else {
+                            levelElement.text('No data');
+                            levelElement.addClass('no-data');
+                        }
+                    }
+                },
+                error: function() {
+                    console.error('Error fetching vessel data');
+                }
+            });
+        }
+
+        // Fetch data every 5 seconds (5000ms)
+        setInterval(fetchVesselData, 5000);  // Fetch data every 5 seconds
+
+        // Initial data fetch when page loads
+        fetchVesselData();
+    </script>
+</body>
+</html>

@@ -16,6 +16,14 @@
             flex-direction: column;
             align-items: center;
         }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
         .container {
             display: flex;
             flex-direction: column;
@@ -27,36 +35,42 @@
             max-width: 800px;
             width: 100%;
         }
+
         .rectangles {
             display: flex;
-            /* gap: 20px; */
+            flex-wrap: wrap;  /* Allow vessels to wrap onto new lines */
+            justify-content: flex-start;  /* Align items to the left */
             margin-top: 20px;
-            /* align-items: flex-end; */
-            /* justify-content: center; */
-            /* flex-wrap: nowrap;
+            gap: 270px;  /* Add space between each image */
         }
+
         .vessel-container {
             position: relative;
             display: flex;
             justify-content: center;
             align-items: flex-end;
             margin-bottom: 10px;
-            transform: translateX(-50px);  /* Shift all vessels 20px to the left */
+            width: 31px;  /* Default width for larger screens */
+            flex-shrink: 0; /* Prevent shrinking */
         }
+
+        /* Outer rectangle styles - now in front of images */
         .outer_rectangle {
-            height: 243px;
+            height: 242px;
             width: 31px;
             border-radius: 5px;
             border: 2px solid #ddd;
             background: white;
             position: absolute;
+            top: 116px;
             display: flex;
             align-items: flex-end;
             justify-content: center;
-            bottom: 16rem;  /* Position the rectangle towards the bottom of the image */
+            z-index: 0;
             transition: left 0.3s ease;
-            transform: translateX(8rem);
+            left: -15px;
         }
+
         .rectangle {
             width: 100%;
             background-color: #4a90e2;
@@ -65,6 +79,7 @@
             bottom: 0;
             transition: height 0.3s ease;
         }
+
         .value {
             text-align: center;
             font-weight: bold;
@@ -72,35 +87,58 @@
             font-size: 14px;
             position: relative;
             bottom: 2rem;
-            left: -41%;
+            left: -554%;
             transform: translateX(45%);
             transition: color 0.3s;
+            bottom: 4px;
         }
+
         .value.no-data {
             color: #888;
         }
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 20px;
-        }
+
         .error {
             color: red;
             text-align: center;
             margin-top: 40px;
             font-weight: bold;
         }
+
         /* Responsive Design */
-        @media screen and (max-width: 600px) {
+        @media screen and (max-width: 1300px) {
             .rectangles {
-                flex-direction: column;
-                align-items: center;
-            }
-            .outer_rectangle {
-                margin-bottom: 10px;
-                width: 80px;
+                margin-left: 9rem
             }
         }
+        @media screen and (max-width: 1000px) {
+            .rectangles {
+                margin-left: 9rem
+            }
+        }
+        @media screen and (max-width: 600px) {
+            .rectangles {
+                flex-direction: column;  /* Stack vessels vertically on smaller screens */
+                gap: 15px;  /* Add vertical space between images */
+            }
+
+            .outer_rectangle {
+                width: 30px;  /* Adjust width of the outer rectangle */
+                top: 116px;  /* Keep the outer rectangle aligned with the top of the image */
+                left: -165%;  /* Center the outer rectangle */
+                transform: translateX(-50%);  /* Correct centering */
+            }
+
+            .vessel-image {
+                margin-left: -7.1rem;
+            }
+
+            .value {
+                font-size: 12px;  /* Adjust font size */
+                left: -10rem;  /* Adjust position of value */
+                bottom: 10px;
+            }
+        }
+
     </style>
     <!-- Include jQuery for AJAX requests -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -110,7 +148,7 @@
     <div class="rectangles" id="vessel-data-container">
         <!-- Loop through each vessel and render its initial state -->
         {% for vessel in vessel_positions %}
-            <div class="vessel-container" style="left: {{ vessel.left_position }}px;" id="vessel-{{ vessel.device_id }}">
+            <div class="vessel-container" id="vessel-{{ vessel.device_id }}">
                 <img src="{% static 'monitor/container.png' %}" alt="Vessel Image" class="vessel-image">
                 <div class="outer_rectangle">
                     <div class="rectangle" style="height: {{ vessel.level|default:0 }}px;"></div>
